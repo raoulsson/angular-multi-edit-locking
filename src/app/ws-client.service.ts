@@ -20,7 +20,7 @@ export class WsClientService {
       map(
         (response: MessageEvent): Message | undefined => {
           const json = JSON.parse(response.data);
-          console.log('json: ', json);
+          // console.log('json: ', json);
           if(json.type === 'pong') {
             console.log('pong received');
             return undefined;
