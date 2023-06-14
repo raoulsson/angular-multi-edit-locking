@@ -1,4 +1,4 @@
-import {Inject, Injectable, Injector, PLATFORM_ID} from '@angular/core';
+import {Injectable} from '@angular/core';
 import {Observable, Observer, Subject} from 'rxjs';
 import {AnonymousSubject} from 'rxjs/internal/Subject';
 import {map} from 'rxjs/operators';
@@ -25,13 +25,10 @@ export class EditLockerClientWsService {
             console.log('pong received');
             return undefined;
           } else {
-            let message: GenericMessage = {
-              type: '',
-              payload: ''
+            return {
+              type: json.type,
+              payload: json.payload
             };
-            message.type = json.type;
-            message.payload = 'asdf';
-            return message;
           }
         }
       )

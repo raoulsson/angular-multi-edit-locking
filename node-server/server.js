@@ -300,10 +300,10 @@ class EditLockerWebSocketServer {
       this.editablesMap.forEach((ws, editableId) => {
         if (ws !== null) {
           const response = {
-            type: 'pong',
-            payload: 'are you there?'
+            type: 'lock',
+            payload: true
           }
-          console.log('Sending ping to client: ' + editableId)
+          console.log('Sending lock client: ' + editableId)
           ws.send(JSON.stringify(response));
         }
       });

@@ -22,7 +22,7 @@ export class ChatComponent implements OnDestroy {
         console.log("Response from server mapped to message: " + message.source + ", payload: " + message.content);
       }
     });
-    this.intervalRunnerService = new IntervalRunnerService(() => this.runPingLambda());
+    this.intervalRunnerService = new IntervalRunnerService(1000, () => this.runPingLambda());
     this.intervalRunnerService.startInterval();
   }
 

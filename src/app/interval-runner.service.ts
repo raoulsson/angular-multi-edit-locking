@@ -11,10 +11,10 @@ export class IntervalRunnerService {
   intervalLength: number;
   codeToRun: (() => void);
 
-  constructor(@Inject('IntervalCodeToRun') codeToRun: IntervalCodeToRun) {
+  constructor(@Inject('number') intervalLength: number, @Inject('IntervalCodeToRun') codeToRun: IntervalCodeToRun) {
     this.codeToRun = codeToRun;
     this.intervalId = null;
-    this.intervalLength = 1000; // default interval length in milliseconds
+    this.intervalLength = intervalLength;
   }
 
   setCodeToRun(codeToRun: IntervalCodeToRun) {

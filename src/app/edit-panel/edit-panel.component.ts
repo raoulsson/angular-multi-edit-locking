@@ -21,13 +21,16 @@ export class EditPanelComponent implements OnDestroy {
   intervalRunnerService: IntervalRunnerService;
 
   constructor(private editLockerClientWsService: EditLockerClientWsService) {
-    this.intervalRunnerService = new IntervalRunnerService(() => this.sendPingLambda());
+    this.intervalRunnerService = new IntervalRunnerService(3000,() => this.sendPingLambda());
 
     editLockerClientWsService.genericMessageSubject.subscribe(genericMessage => {
       if (genericMessage !== undefined) {
         console.log("Response from server mapped to type: " + genericMessage.type + ", payload: " + genericMessage.payload);
         if (genericMessage.type === 'subscribed') {
           this.intervalRunnerService.startInterval();
+        }
+        if (genericMessage.type === 'lock') {
+          this.lockEditing(genericMessage.payload === 'true');
         }
       }
     });
@@ -85,21 +88,8 @@ export class EditPanelComponent implements OnDestroy {
   }
 
   toggleEditMode(): void {
-    if (this.inEditingMode) {
-      // send a message to the server
-      // send to server i want to edit, and handle yes/no response
-      // sync call
-
-    } else {
-      // the opposite: unlock
-    }
     this.inEditingMode = !this.inEditingMode;
     this.editModeChanged.emit(this.inEditingMode);
-    let pingMessage: GenericMessage = {
-      type: 'ping',
-      payload: 'alive!'
-    };
-    this.editLockerClientWsService.genericMessageSubject.next(pingMessage);
   }
 
   private sendPingLambda() {
@@ -116,4 +106,7 @@ export class EditPanelComponent implements OnDestroy {
     this.unsubscribeSelf();
   }
 
+  private lockEditing(lock: boolean) {
+    this.toggleEditMode();
+  }
 }
