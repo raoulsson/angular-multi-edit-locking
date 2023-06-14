@@ -35,7 +35,7 @@ export class EditPanelComponent implements OnDestroy {
         }
         if (genericMessage.type === 'lock') {
           // @ts-ignore
-          this.lockEditing(genericMessage.payload.lock === 'true', genericMessage.payload.lockedBy);
+          this.lockEditing(genericMessage.payload.lock === true, genericMessage.payload.lockedBy);
         }
       }
     });
@@ -109,6 +109,7 @@ export class EditPanelComponent implements OnDestroy {
   }
 
   private lockEditing(lock: boolean, lockedBy: string) {
+    console.log("lockEditing: " + lock);
     if (lock && this.inEditingMode) {
       this.toggleEditMode();
     }

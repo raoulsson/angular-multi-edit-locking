@@ -295,14 +295,23 @@ class EditLockerWebSocketServer {
     }
   }
 
+  c = 0;
+
   runIntervalNotifier() {
     setInterval(() => {
+      this.c = this.c + 1;
+      let lock = true;
+      if(this.c > 3) {
+        console.log("Unlocking");
+        lock = false;
+        this.c = 0;
+      }
       this.editablesMap.forEach((ws, editableId) => {
         if (ws !== null) {
           const response = {
             type: 'lock',
             payload: {
-              "lock": "true",
+              "lock": lock,
               "lockedBy": editableId
             }
           }
