@@ -1,43 +1,41 @@
-import {Injectable} from '@angular/core';
+import {Inject, Injectable, Injector, PLATFORM_ID} from '@angular/core';
 import {Observable, Observer, Subject} from 'rxjs';
 import {AnonymousSubject} from 'rxjs/internal/Subject';
 import {map} from 'rxjs/operators';
 import {Message} from "./message";
+import {GenericMessage} from "./generic-message";
 
-const CHAT_URL = "ws://localhost:8081";
+const EDIT_LOCKER_ENDPOINT = "ws://localhost:9074";
 
 @Injectable({
   providedIn: 'root'
 })
-export class WsClientService {
+export class EditLockerClientWsService {
 
   private subject: AnonymousSubject<MessageEvent> | undefined
-  public messages: Subject<Message>;
+  public genericMessageSubject: Subject<GenericMessage>;
 
   constructor() {
-    this.messages = <Subject<Message>>this.connect(CHAT_URL).pipe(
+    this.genericMessageSubject = <Subject<GenericMessage>>this.connect(EDIT_LOCKER_ENDPOINT).pipe(
       map(
-        (response: MessageEvent): Message | undefined => {
+        (response: MessageEvent): GenericMessage | undefined => {
           const json = JSON.parse(response.data);
-          // console.log('json: ', json);
+          console.log('json: ', json);
           if(json.type === 'pong') {
             console.log('pong received');
             return undefined;
           } else {
-            let message: Message = {
+            let message: GenericMessage = {
               type: '',
-              source: '',
-              content: ''
+              payload: ''
             };
             message.type = json.type;
-            message.source = 'server';
-            message.content = json.payload;
+            message.payload = 'asdf';
             return message;
           }
         }
       )
     );
-    console.log('constructor setup')
   }
 
   public connect(url: string): AnonymousSubject<MessageEvent> {

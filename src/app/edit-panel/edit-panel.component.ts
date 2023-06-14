@@ -1,13 +1,14 @@
-import { Component, ContentChild, ElementRef, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
-import {webSocket} from 'rxjs/webSocket';
-import {Message} from "../message";
+import {Component, ContentChild, ElementRef, EventEmitter, Input, OnDestroy, Output, TemplateRef} from '@angular/core';
+import {IntervalRunnerService} from "../interval-runner.service";
+import {GenericMessage} from "../generic-message";
+import {EditLockerClientWsService} from "../edit-locker-client-ws.service";
 
 @Component({
   selector: 'app-edit-panel',
   templateUrl: './edit-panel.component.html',
   styleUrls: ['./edit-panel.component.css']
 })
-export class EditPanelComponent {
+export class EditPanelComponent implements OnDestroy {
 
   @Input() inEditingMode: boolean = true;
   // @Input() inEditingMode: boolean = false;
@@ -17,7 +18,49 @@ export class EditPanelComponent {
   @ContentChild('view') templateForView!: TemplateRef<ElementRef>;
   @ContentChild('edit') templateForEdit!: TemplateRef<ElementRef>;
 
-  subject$ = webSocket({url:'ws://localhost:8081'});
+  intervalRunnerService: IntervalRunnerService;
+
+  constructor(private editLockerClientWsService: EditLockerClientWsService) {
+    this.intervalRunnerService = new IntervalRunnerService(() => this.sendPingLambda());
+
+    editLockerClientWsService.genericMessageSubject.subscribe(genericMessage => {
+      if (genericMessage !== undefined) {
+        console.log("Response from server mapped to type: " + genericMessage.type + ", payload: " + genericMessage.payload);
+        if(genericMessage.type === 'subscribed') {
+          this.intervalRunnerService.startInterval();
+        }
+      }
+    });
+    setTimeout(() => {
+      console.log('sleep');
+      this.subscribeSelf();
+      let pingMessage: GenericMessage = {
+        type: 'ping',
+        payload: 'alive!'
+      };
+      this.editLockerClientWsService.genericMessageSubject.next(pingMessage);
+    }, 1000);
+
+  }
+
+  private subscribeSelf() {
+    this.editLockerClientWsService.genericMessageSubject.next(this.subscriptionMessage(true));
+  }
+
+  private unsubscribeSelf() {
+    this.editLockerClientWsService.genericMessageSubject.next(this.subscriptionMessage(false));
+  }
+
+  private subscriptionMessage(subscribe: boolean): GenericMessage {
+    return {
+      type: subscribe ? 'subscribe' : 'unsubscribe',
+      payload: this.uniqueEditableId(),
+    };
+  }
+
+  private uniqueEditableId() {
+    return 'sadf';
+  }
 
   switchToEditMode(): void {
     this.inEditingMode = true;
@@ -34,36 +77,25 @@ export class EditPanelComponent {
     }
     this.inEditingMode = !this.inEditingMode;
     this.editModeChanged.emit(this.inEditingMode);
+    let pingMessage: GenericMessage = {
+      type: 'ping',
+      payload: 'alive!'
+    };
+    this.editLockerClientWsService.genericMessageSubject.next(pingMessage);
   }
 
-  // private startHeartbeat() {
-    // setInterval(() => {
-    //   console.log('ping');
-    //   let message: Message = {
-    //     type: 'ping',
-    //     source: '',
-    //     content: ''
-    //   };
-    //   message.source = 'localhost';
-    //   message.content = 'ping';
-    //
-    //   //this.wsClientService.messages.next(message);
-    // }, 1 * 1000);
-  // }
+  private sendPingLambda() {
+    console.log('ping');
+    let pingMessage: GenericMessage = {
+      type: 'ping',
+      payload: 'alive!'
+    };
+    this.editLockerClientWsService.genericMessageSubject.next(pingMessage);
+  }
+
+  ngOnDestroy(): void {
+    this.intervalRunnerService.stopInterval();
+    this.unsubscribeSelf();
+  }
 
 }
-// /////////////////////////////////////////////////////////////////////////////
-// // Start: Websocket, rxjs. Blocking multi-edit
-// /////////////////////////////////////////////////////////////////////////////
-// import {webSocket} from "ws";
-//
-//
-// const subject$ = webSocket({url:'ws://localhost:8081'});
-//
-// // listen to messages from the server
-// const subscription1 = subject$.subscribe(msg => {
-//   console.log('message received: ' + JSON.stringify(msg));
-// });
-//
-// // send a message to the server
-// subject$.next({message: 'hello world'});

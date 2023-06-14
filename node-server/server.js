@@ -28,7 +28,7 @@ app.get("/", (req, res) => {
 
 app.get("/api/students", (req, res) => {
   let jsonData = readJsonFileSync('./db-students.json');
-  console.log(jsonData.studentsList);
+  // console.log(jsonData.studentsList);
   res.json(jsonData.studentsList);
 });
 
@@ -37,7 +37,7 @@ app.get("/api/students/:id", (req, res) => {
   const found = jsonData.studentsList.some(s => s.id === req.params.id);
   if(found) {
     let student = jsonData.studentsList.find(s => s.id === req.params.id);
-    console.log('student', student);
+    // console.log('student', student);
     res.json(student);
   } else {
     res.status(400).json({msg: `No student with the id of ${req.params.id}`});
@@ -45,7 +45,7 @@ app.get("/api/students/:id", (req, res) => {
 });
 
 app.post("/api/students", (req, res) => {
-  console.log(req.body);
+  // console.log(req.body);
   const newStudent = {
     id: uuidv4().substring(0, 8),
     firstName: req.body.firstName,
@@ -53,7 +53,7 @@ app.post("/api/students", (req, res) => {
     gender: req.body.gender,
     age: req.body.age
   }
-  console.log(newStudent);
+  // console.log(newStudent);
   let jsonData = readJsonFileSync('./db-students.json');
   jsonData.studentsList.push(newStudent);
   writeJsonFileSync('./db-students.json', jsonData);
@@ -73,7 +73,7 @@ app.put("/api/students/:id", (req, res) => {
         s.age = updStudent.age ? updStudent.age : s.age;
 
         writeJsonFileSync('./db-students.json', jsonData);
-        console.log('Updated Student', s)
+        // console.log('Updated Student', s)
         res.send({msg: 'Student updated', s})
       }
     });
@@ -94,7 +94,7 @@ app.delete("/api/students/:id", (req, res) => {
     });
     jsonData.studentsList = keepers;
     writeJsonFileSync('./db-students.json', jsonData);
-    console.log('Deleted Student', req.params.id);
+    // console.log('Deleted Student', req.params.id);
     res.send({msg: `Student deleted ${req.params.id}`});
   } else {
     res.status(400).json({msg: `No student with the id of ${req.params.id}`});
@@ -103,7 +103,7 @@ app.delete("/api/students/:id", (req, res) => {
 
 app.get("/api/products", (req, res) => {
   let jsonData = readJsonFileSync('./db-products.json')
-  console.log(jsonData.productsList);
+  // console.log(jsonData.productsList);
   res.json(jsonData.productsList);
 });
 
@@ -112,7 +112,7 @@ app.get("/api/products/:id", (req, res) => {
   const found = jsonData.productsList.some(p => p.id === req.params.id);
   if(found) {
     let product = jsonData.productsList.find(p => p.id === req.params.id);
-    console.log('product', product);
+    // console.log('product', product);
     res.json(product);
   } else {
     res.status(400).json({msg: `No product with the id of ${req.params.id}`});
@@ -120,14 +120,14 @@ app.get("/api/products/:id", (req, res) => {
 });
 
 app.post("/api/products", (req, res) => {
-  console.log(req.body);
+  // console.log(req.body);
   const newProduct = {
     id: uuidv4().substring(0, 8),
     name: req.body.name,
     make: req.body.make,
     price: req.body.price
   }
-  console.log(newProduct);
+  // console.log(newProduct);
   let jsonData = readJsonFileSync('./db-products.json');
   jsonData.productsList.push(newProduct);
   writeJsonFileSync('./db-products.json', jsonData);
@@ -146,7 +146,7 @@ app.put("/api/products/:id", (req, res) => {
         p.price = updProduct.price ? updProduct.price : p.price;
 
         writeJsonFileSync('./db-products.json', jsonData);
-        console.log('Updated Product', p)
+        // console.log('Updated Product', p)
         res.send({msg: 'Product updated', s: p})
       }
     });
@@ -167,7 +167,7 @@ app.delete("/api/products/:id", (req, res) => {
     });
     jsonData.productsList = keepers;
     writeJsonFileSync('./db-products.json', jsonData);
-    console.log('Deleted Product', req.params.id);
+    // console.log('Deleted Product', req.params.id);
     res.send({msg: `Product deleted ${req.params.id}`});
   } else {
     res.status(400).json({msg: `No product with the id of ${req.params.id}`});
@@ -181,9 +181,6 @@ app.listen(PORT, () => console.log(`App listening on port: ${PORT}`));
 // Start: Websocket, rxjs. Blocking multi-edit
 /////////////////////////////////////////////////////////////////////////////
 import { WebSocketServer } from "ws";
-import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
-import { Subject } from 'rxjs';
-import HashMap from 'hashmap';
 
 const wss = new WebSocketServer({ port: 8081 });
 
@@ -223,10 +220,15 @@ wss.on('listening', () => {
   console.log('WebSocket server started');
 });
 
-class LockerWebSocketServer {
+import HashMap from 'hashmap';
+
+class EditLockerWebSocketServer {
+
+  clients = null;
+
   constructor(port) {
     this.port = port;
-    this.clients = new Set();
+    this.clients = new HashMap();
     this.wss = null;
   }
 
@@ -234,27 +236,47 @@ class LockerWebSocketServer {
     this.wss = new WebSocketServer({ port: this.port });
 
     this.wss.on('connection', (ws) => {
-      console.log('New client connected.');
-      this.clients.add(ws);
+      console.log('New edit-locker client connected.');
+      this.clients.set(ws, false);
 
       ws.on('message', (buffer) => {
         const message = JSON.parse(buffer.toString());
-        console.log('Received buffer:', message);
+        console.log('Received message:', message);
 
         if (!this.isSubscribed(ws)) {
           if (message.type === 'subscribe') {
-            console.log('Client subscribed.');
+            console.log('Client subscription. ID: ' + message.payload);
             // Handle the subscription logic here
             this.setSubscribed(ws, true);
 
             // Send a response to the client
-            ws.send('You are now subscribed.');
+            const response = {
+              type: 'subscribed',
+              payload: message.payload
+            }
+            return ws.send(JSON.stringify(response));
           } else {
-            console.log('Invalid message received. Closing connection.');
+            console.log('Initial message type not "subscribe". Closing connection.');
             ws.close();
           }
         } else {
           // Handle subsequent messages after subscription here
+          if (message.type === 'ping') {
+            console.log('Ping received:', message.payload);
+            const response = {
+              type: 'pong',
+              payload: 'glad to hear from you!'
+            }
+            return ws.send(JSON.stringify(response));
+          }
+          if (message.type === 'unsubscribe') {
+            console.log('Client unsubscription. ID: ', message.payload);
+            const response = {
+              type: 'unsubscribed',
+              payload: message.payload
+            }
+            return ws.send(JSON.stringify(response));
+          }
         }
       });
 
@@ -267,18 +289,18 @@ class LockerWebSocketServer {
   }
 
   isSubscribed(ws) {
-    return this.clients.has(ws) && this.clients[ws].subscribed;
+    return this.clients.has(ws) && this.clients.get(ws) === true;
   }
 
   setSubscribed(ws, subscribed) {
     if (this.clients.has(ws)) {
-      this.clients[ws].subscribed = subscribed;
+      this.clients.set(ws, subscribed);
     }
   }
 }
 
 // Usage example
-const server = new LockerWebSocketServer(9074);
+const server = new EditLockerWebSocketServer(9074);
 server.start();
 
 
