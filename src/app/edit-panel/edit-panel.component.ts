@@ -34,12 +34,16 @@ export class EditPanelComponent implements OnDestroy {
     setTimeout(() => {
       console.log('sleep');
       this.subscribeSelf();
-      let pingMessage: GenericMessage = {
-        type: 'ping',
-        payload: 'alive!'
-      };
-      this.editLockerClientWsService.genericMessageSubject.next(pingMessage);
+      setTimeout(() => {
+        console.log('sleep');
+        let pingMessage: GenericMessage = {
+          type: 'ping',
+          payload: 'alive!'
+        };
+        this.editLockerClientWsService.genericMessageSubject.next(pingMessage);
+      }, 1000);
     }, 1000);
+
 
   }
 

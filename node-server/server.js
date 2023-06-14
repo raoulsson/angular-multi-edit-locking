@@ -7,6 +7,11 @@ import {fileURLToPath} from "url";
 import {dirname, join} from "path";
 import {logger} from "./middleware/logger.js";
 import {v4 as uuidv4} from "uuid";
+/////////////////////////////////////////////////////////////////////////////
+// Start: Websocket, rxjs. Blocking multi-edit
+/////////////////////////////////////////////////////////////////////////////
+import {WebSocketServer} from "ws";
+import HashMap from 'hashmap';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -177,11 +182,6 @@ app.delete("/api/products/:id", (req, res) => {
 const PORT = 3000;
 app.listen(PORT, () => console.log(`App listening on port: ${PORT}`));
 
-/////////////////////////////////////////////////////////////////////////////
-// Start: Websocket, rxjs. Blocking multi-edit
-/////////////////////////////////////////////////////////////////////////////
-import { WebSocketServer } from "ws";
-
 const wss = new WebSocketServer({ port: 8081 });
 
 // Chat Event listener for WebSocket server connections
@@ -220,15 +220,12 @@ wss.on('listening', () => {
   console.log('WebSocket server started');
 });
 
-import HashMap from 'hashmap';
-
 class EditLockerWebSocketServer {
 
-  clients = null;
+  editablesMap = new HashMap();
 
   constructor(port) {
     this.port = port;
-    this.clients = new HashMap();
     this.wss = null;
   }
 
@@ -237,7 +234,6 @@ class EditLockerWebSocketServer {
 
     this.wss.on('connection', (ws) => {
       console.log('New edit-locker client connected.');
-      this.clients.set(ws, false);
 
       ws.on('message', (buffer) => {
         const message = JSON.parse(buffer.toString());
@@ -247,7 +243,7 @@ class EditLockerWebSocketServer {
           if (message.type === 'subscribe') {
             console.log('Client subscription. ID: ' + message.payload);
             // Handle the subscription logic here
-            this.setSubscribed(ws, true);
+            this.setSubscribed(message.payload, ws);
 
             // Send a response to the client
             const response = {
@@ -271,6 +267,7 @@ class EditLockerWebSocketServer {
           }
           if (message.type === 'unsubscribe') {
             console.log('Client unsubscription. ID: ', message.payload);
+            this.editablesMap.remove(ws);
             const response = {
               type: 'unsubscribed',
               payload: message.payload
@@ -282,26 +279,44 @@ class EditLockerWebSocketServer {
 
       ws.on('close', () => {
         console.log('Client disconnected.');
-        this.clients.delete(ws);
-        // Handle the connection close logic here
+        this.editablesMap.delete(this.editablesMap.search(ws));
       });
     });
   }
 
   isSubscribed(ws) {
-    return this.clients.has(ws) && this.clients.get(ws) === true;
+    if(this.editablesMap.search(ws) !== null) {
+      return true;
+    }
+    return false;
   }
 
-  setSubscribed(ws, subscribed) {
-    if (this.clients.has(ws)) {
-      this.clients.set(ws, subscribed);
+  setSubscribed(editableId, ws) {
+    if (!this.editablesMap.has(editableId)) {
+      this.editablesMap.set(editableId, ws);
     }
+  }
+
+  runIntervalNotifier() {
+    setInterval(() => {
+      this.editablesMap.forEach((ws, editableId) => {
+        if (ws !== null) {
+          const response = {
+            type: 'pong',
+            payload: 'are you there?'
+          }
+          console.log('Sending ping to client: ' + editableId)
+          ws.send(JSON.stringify(response));
+        }
+      });
+    }, 5000);
   }
 }
 
 // Usage example
 const server = new EditLockerWebSocketServer(9074);
 server.start();
+server.runIntervalNotifier();
 
 
 /*
