@@ -1,15 +1,15 @@
 <div class="container edit-panel-container">
-  <p class="para" *ngIf="inEditingMode">Switch to: Edit Mode</p>
-  <p class="para" *ngIf="!inEditingMode">Switch to: View Mode</p>
+  <p class="para" *ngIf="!inEditingMode">Switch to: Edit Mode</p>
+  <p class="para" *ngIf="inEditingMode">Switch to: View Mode</p>
 <button (click)="toggleEditMode()">
-<mat-icon *ngIf="inEditingMode" aria-hidden="false" aria-label="Example home icon" fontIcon="edit"></mat-icon>
-<mat-icon *ngIf="!inEditingMode" aria-hidden="false" aria-label="Example home icon" fontIcon="view_module"></mat-icon>
+<mat-icon *ngIf="inEditingMode" [ngClass]="{'disable':!canEdit}" matTooltip="Switch to View Mode" aria-hidden="false" aria-label="Example home icon" fontIcon="view_module"></mat-icon>
+<mat-icon *ngIf="!inEditingMode" [ngClass]="{'disable':!canEdit}" [matTooltip]="tooltip" aria-hidden="false" aria-label="Example home icon" fontIcon="edit"></mat-icon>
 </button>
 </div>
-<ng-container *ngIf="!inEditingMode">
+<ng-container *ngIf="inEditingMode">
   <ng-template [ngTemplateOutlet]="templateForEdit"></ng-template>
 </ng-container>
 
-<ng-container *ngIf="inEditingMode">
+<ng-container *ngIf="!inEditingMode">
   <ng-template [ngTemplateOutlet]="templateForView"></ng-template>
 </ng-container>

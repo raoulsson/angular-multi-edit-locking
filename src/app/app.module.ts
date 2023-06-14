@@ -29,6 +29,7 @@ import { EditProductComponent } from './edit-product/edit-product.component';
 import { AddProductComponent } from './add-product/add-product.component';
 import {NoCacheHeadersInterceptor} from "./NoCacheHeadersInterceptor";
 import { ChatComponent } from './chat/chat.component';
+import {MatTooltipModule} from "@angular/material/tooltip";
 
 
 @NgModule({
@@ -47,7 +48,8 @@ import { ChatComponent } from './chat/chat.component';
     MatButtonModule,
     FormsModule,
     MatIconModule,
-    MatDialogModule
+    MatDialogModule,
+    MatTooltipModule
   ],
   providers: [
     {

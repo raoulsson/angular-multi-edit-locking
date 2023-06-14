@@ -301,9 +301,12 @@ class EditLockerWebSocketServer {
         if (ws !== null) {
           const response = {
             type: 'lock',
-            payload: true
+            payload: {
+              "lock": "true",
+              "lockedBy": editableId
+            }
           }
-          console.log('Sending lock client: ' + editableId)
+          console.log('Sending lock to client: ' + editableId)
           ws.send(JSON.stringify(response));
         }
       });

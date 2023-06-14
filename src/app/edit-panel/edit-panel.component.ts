@@ -10,10 +10,14 @@ import {EditLockerClientWsService} from "../edit-locker-client-ws.service";
 })
 export class EditPanelComponent implements OnDestroy {
 
-  @Input() inEditingMode: boolean = true;
-  // @Input() inEditingMode: boolean = false;
+  // @Input() inEditingMode: boolean = true;
+  @Input() inEditingMode: boolean = false;
+
+  @Input() canEdit: boolean = true;
 
   @Output() editModeChanged: EventEmitter<boolean> = new EventEmitter<boolean>();
+
+  @Input() tooltip: string = "";
 
   @ContentChild('view') templateForView!: TemplateRef<ElementRef>;
   @ContentChild('edit') templateForEdit!: TemplateRef<ElementRef>;
@@ -21,25 +25,24 @@ export class EditPanelComponent implements OnDestroy {
   intervalRunnerService: IntervalRunnerService;
 
   constructor(private editLockerClientWsService: EditLockerClientWsService) {
-    this.intervalRunnerService = new IntervalRunnerService(3000,() => this.sendPingLambda());
+    this.intervalRunnerService = new IntervalRunnerService(3000, () => this.sendPingLambda());
 
     editLockerClientWsService.genericMessageSubject.subscribe(genericMessage => {
       if (genericMessage !== undefined) {
-        console.log("Response from server mapped to type: " + genericMessage.type + ", payload: " + genericMessage.payload);
+        // console.log("Response from server mapped to type: " + genericMessage.type + ", payload: " + genericMessage.payload);
         if (genericMessage.type === 'subscribed') {
           this.intervalRunnerService.startInterval();
         }
         if (genericMessage.type === 'lock') {
-          this.lockEditing(genericMessage.payload === 'true');
+          // @ts-ignore
+          this.lockEditing(genericMessage.payload.lock === 'true', genericMessage.payload.lockedBy);
         }
       }
     });
     // TODO: fix this so we get a sync initial call without delays
     setTimeout(() => {
-      console.log('sleep');
       this.subscribeSelf();
       setTimeout(() => {
-        console.log('sleep');
         let pingMessage: GenericMessage = {
           type: 'ping',
           payload: 'alive!'
@@ -83,11 +86,10 @@ export class EditPanelComponent implements OnDestroy {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
   }
 
-  switchToEditMode(): void {
-    this.inEditingMode = true;
-  }
-
   toggleEditMode(): void {
+    if(!this.canEdit) {
+      return;
+    }
     this.inEditingMode = !this.inEditingMode;
     this.editModeChanged.emit(this.inEditingMode);
   }
@@ -106,7 +108,17 @@ export class EditPanelComponent implements OnDestroy {
     this.unsubscribeSelf();
   }
 
-  private lockEditing(lock: boolean) {
-    this.toggleEditMode();
+  private lockEditing(lock: boolean, lockedBy: string) {
+    if (lock && this.inEditingMode) {
+      this.toggleEditMode();
+    }
+    if(lock) {
+      console.log("locked by: " + lockedBy);
+      this.tooltip = lockedBy + " is editing";
+    } else {
+      console.log("unlocked");
+      this.tooltip = "Switch to Edit Mode";
+    }
+    this.canEdit = !lock;
   }
 }

@@ -7,3 +7,14 @@
 .para {
   padding: 14px;
 }
+
+.disable:hover{
+  cursor: not-allowed;
+}
+.disable:active{
+  pointer-events: none;
+}
+mat-icon.disable {
+  filter:opacity(0.5);
+  color: red;
+}
