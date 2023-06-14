@@ -1,5 +1,6 @@
 import { Component, ContentChild, ElementRef, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
 import {webSocket} from 'rxjs/webSocket';
+import {Message} from "../message";
 
 @Component({
   selector: 'app-edit-panel',
@@ -8,8 +9,8 @@ import {webSocket} from 'rxjs/webSocket';
 })
 export class EditPanelComponent {
 
-  // @Input() inEditingMode: boolean = true;
-  @Input() inEditingMode: boolean = false;
+  @Input() inEditingMode: boolean = true;
+  // @Input() inEditingMode: boolean = false;
 
   @Output() editModeChanged: EventEmitter<boolean> = new EventEmitter<boolean>();
 
@@ -23,11 +24,32 @@ export class EditPanelComponent {
   }
 
   toggleEditMode(): void {
+    if(this.inEditingMode)  {
+      // send a message to the server
+      // send to server i want to edit, and handle yes/no response
+      // sync call
+
+    } else {
+      // the opposite: unlock
+    }
     this.inEditingMode = !this.inEditingMode;
     this.editModeChanged.emit(this.inEditingMode);
   }
 
-
+  // private startHeartbeat() {
+    // setInterval(() => {
+    //   console.log('ping');
+    //   let message: Message = {
+    //     type: 'ping',
+    //     source: '',
+    //     content: ''
+    //   };
+    //   message.source = 'localhost';
+    //   message.content = 'ping';
+    //
+    //   //this.wsClientService.messages.next(message);
+    // }, 1 * 1000);
+  // }
 
 }
 // /////////////////////////////////////////////////////////////////////////////

@@ -31,3 +31,5 @@ npm i uuid
 npm i ws
 
 npm i rxjs
+
+npm install hashmap

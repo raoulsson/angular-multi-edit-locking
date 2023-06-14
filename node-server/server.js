@@ -183,12 +183,13 @@ app.listen(PORT, () => console.log(`App listening on port: ${PORT}`));
 import { WebSocketServer } from "ws";
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { Subject } from 'rxjs';
+import HashMap from 'hashmap';
 
 const wss = new WebSocketServer({ port: 8081 });
 
-// Event listener for WebSocket server connections
+// Chat Event listener for WebSocket server connections
 wss.on('connection', (ws) => {
-  console.log('Client connected');
+  console.log('New chat client connected');
   // Event listener for incoming messages
   ws.on('message', (buffer) => {
     const message = JSON.parse(buffer.toString());
@@ -222,6 +223,65 @@ wss.on('listening', () => {
   console.log('WebSocket server started');
 });
 
+class LockerWebSocketServer {
+  constructor(port) {
+    this.port = port;
+    this.clients = new Set();
+    this.wss = null;
+  }
+
+  start() {
+    this.wss = new WebSocketServer({ port: this.port });
+
+    this.wss.on('connection', (ws) => {
+      console.log('New client connected.');
+      this.clients.add(ws);
+
+      ws.on('message', (buffer) => {
+        const message = JSON.parse(buffer.toString());
+        console.log('Received buffer:', message);
+
+        if (!this.isSubscribed(ws)) {
+          if (message.type === 'subscribe') {
+            console.log('Client subscribed.');
+            // Handle the subscription logic here
+            this.setSubscribed(ws, true);
+
+            // Send a response to the client
+            ws.send('You are now subscribed.');
+          } else {
+            console.log('Invalid message received. Closing connection.');
+            ws.close();
+          }
+        } else {
+          // Handle subsequent messages after subscription here
+        }
+      });
+
+      ws.on('close', () => {
+        console.log('Client disconnected.');
+        this.clients.delete(ws);
+        // Handle the connection close logic here
+      });
+    });
+  }
+
+  isSubscribed(ws) {
+    return this.clients.has(ws) && this.clients[ws].subscribed;
+  }
+
+  setSubscribed(ws, subscribed) {
+    if (this.clients.has(ws)) {
+      this.clients[ws].subscribed = subscribed;
+    }
+  }
+}
+
+// Usage example
+const server = new LockerWebSocketServer(9074);
+server.start();
 
 
-
+/*
+if locked, send to all who have the page open: no editable
+ */

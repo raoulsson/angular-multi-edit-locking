@@ -40,7 +40,7 @@ export class WsClientService {
       )
     );
     console.log('constructor setup')
-    this.fingerPrintUser();
+    // this.fingerPrintUser();
   }
 
   public connect(url: string): AnonymousSubject<MessageEvent> {
