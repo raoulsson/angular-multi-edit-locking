@@ -1,4 +1,14 @@
-import {Component, ContentChild, ElementRef, EventEmitter, Input, OnDestroy, Output, TemplateRef} from '@angular/core';
+import {
+  AfterViewInit,
+  Component, ComponentRef,
+  ContentChild,
+  ElementRef,
+  EventEmitter,
+  Input,
+  OnDestroy,
+  Output, QueryList,
+  TemplateRef, ViewChild, ViewChildren, ViewContainerRef
+} from '@angular/core';
 import {IntervalRunnerService} from "../interval-runner.service";
 import {GenericMessage} from "../generic-message";
 import {EditLockerClientWsService} from "../edit-locker-client-ws.service";
@@ -8,7 +18,9 @@ import {EditLockerClientWsService} from "../edit-locker-client-ws.service";
   templateUrl: './edit-panel.component.html',
   styleUrls: ['./edit-panel.component.css']
 })
-export class EditPanelComponent implements OnDestroy {
+export class EditPanelComponent implements OnDestroy, AfterViewInit {
+  @ViewChild('dynamicComponentContainer', { read: ViewContainerRef }) dynamicComponentContainer!: ViewContainerRef;
+  dynamicComponentRef!: ComponentRef<any>;
 
   // @Input() inEditingMode: boolean = true;
   @Input() inEditingMode: boolean = false;
@@ -17,7 +29,7 @@ export class EditPanelComponent implements OnDestroy {
 
   @Output() editModeChanged: EventEmitter<boolean> = new EventEmitter<boolean>();
 
-  @Input() tooltip: string = "";
+  @Input() tooltip: string = "loading...";
 
   @ContentChild('view') templateForView!: TemplateRef<ElementRef>;
   @ContentChild('edit') templateForEdit!: TemplateRef<ElementRef>;
@@ -95,12 +107,20 @@ export class EditPanelComponent implements OnDestroy {
   }
 
   private sendPingLambda() {
-    console.log('ping');
     let pingMessage: GenericMessage = {
       type: 'ping',
       payload: 'alive!'
     };
     this.editLockerClientWsService.genericMessageSubject.next(pingMessage);
+  }
+
+  ngAfterViewInit(): void {
+    if (this.dynamicComponentRef) {
+      const dynamicComponent = this.dynamicComponentRef.instance;
+      console.log(">>>" + dynamicComponent.toString());
+      // const fingerprintHash = this.createFingerprintHash(dynamicComponent.data);
+      // console.log(fingerprintHash);
+    }
   }
 
   ngOnDestroy(): void {
@@ -109,7 +129,6 @@ export class EditPanelComponent implements OnDestroy {
   }
 
   private lockEditing(lock: boolean, lockedBy: string) {
-    console.log("lockEditing: " + lock);
     if (lock && this.inEditingMode) {
       this.toggleEditMode();
     }
@@ -122,4 +141,6 @@ export class EditPanelComponent implements OnDestroy {
     }
     this.canEdit = !lock;
   }
+
+
 }

@@ -20,9 +20,9 @@ export class EditLockerClientWsService {
       map(
         (response: MessageEvent): GenericMessage | undefined => {
           const json = JSON.parse(response.data);
-          console.log('json: ', json);
+          // console.log('json: ', json);
           if(json.type === 'pong') {
-            console.log('pong received');
+            // console.log('pong received');
             return undefined;
           } else {
             return {
