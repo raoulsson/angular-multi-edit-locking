@@ -192,8 +192,16 @@ wss.on('connection', (ws) => {
   // Event listener for incoming messages
   ws.on('message', (buffer) => {
     const message = JSON.parse(buffer.toString());
-    console.log('Received message:', message);
 
+    if(message.type === 'ping') {
+      console.log('Ping received:', message);
+      const response = {
+        type: 'pong',
+        payload: message.content
+      }
+      return ws.send(JSON.stringify(response));
+    }
+    console.log('Received message:', message);
     const response = {
       type: "echo",
       payload: message.content

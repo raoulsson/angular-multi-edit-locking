@@ -3,6 +3,7 @@ import {Observable, Observer, Subject} from 'rxjs';
 import {AnonymousSubject} from 'rxjs/internal/Subject';
 import {map} from 'rxjs/operators';
 import {Message} from "./message";
+import {reportUnhandledError} from "rxjs/internal/util/reportUnhandledError";
 
 const CHAT_URL = "ws://localhost:8081";
 
@@ -17,20 +18,28 @@ export class WsClientService {
   constructor() {
     this.messages = <Subject<Message>>this.connect(CHAT_URL).pipe(
       map(
-        (response: MessageEvent): Message => {
+        (response: MessageEvent): Message | undefined => {
           const json = JSON.parse(response.data);
           console.log('json: ', json);
-          let message: Message = {
-            source: '',
-            content: ''
-          };
-          message.source = 'server';
-          message.content = json.payload;
-          return message;
+          if(json.type === 'pong') {
+            console.log('pong received');
+            return undefined;
+          } else {
+            let message: Message = {
+              type: '',
+              source: '',
+              content: ''
+            };
+            message.type = json.type;
+            message.source = 'server';
+            message.content = json.payload;
+            return message;
+          }
         }
       )
     );
     console.log('constructor setup')
+
   }
 
   public connect(url: string): AnonymousSubject<MessageEvent> {
@@ -62,4 +71,6 @@ export class WsClientService {
     // return Subject.create(observer, observable);
     return new AnonymousSubject<MessageEvent<Message>>(observer, observable);
   }
+
+
 }

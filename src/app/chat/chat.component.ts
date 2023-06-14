@@ -16,13 +16,18 @@ export class ChatComponent {
 
   constructor(private wsClientService: WsClientService) {
     wsClientService.messages.subscribe(message => {
-      this.received.push(message);
-      console.log("Response from server mapped to message: " + message.source + ", payload: " + message.content);
+      if(message !== undefined) {
+        this.received.push(message);
+        console.log("Response from server mapped to message: " + message.source + ", payload: " + message.content);
+      }
+
     });
+    this.startHeartbeat();
   }
 
   sendMsg() {
     let message: Message = {
+      type: 'message',
       source: '',
       content: ''
     };
@@ -32,4 +37,20 @@ export class ChatComponent {
     this.sent.push(message);
     this.wsClientService.messages.next(message);
   }
+
+  private startHeartbeat() {
+    setInterval(() => {
+      console.log('ping');
+      let message: Message = {
+        type: 'ping',
+        source: '',
+        content: ''
+      };
+      message.source = 'localhost';
+      message.content = 'ping';
+
+      this.wsClientService.messages.next(message);
+    }, 1 * 1000);
+  }
+
 }
