@@ -19,6 +19,7 @@ import {EditLockerClientWsService} from "../edit-locker-client-ws.service";
   styleUrls: ['./edit-panel.component.css']
 })
 export class EditPanelComponent implements OnDestroy, AfterViewInit {
+  // https://stackoverflow.com/questions/48330760/cannot-read-property-viewcontainerref-of-undefined
   @ViewChild('dynamicComponentContainer', { read: ViewContainerRef }) dynamicComponentContainer!: ViewContainerRef;
   dynamicComponentRef!: ComponentRef<any>;
 
@@ -41,7 +42,7 @@ export class EditPanelComponent implements OnDestroy, AfterViewInit {
 
     editLockerClientWsService.genericMessageSubject.subscribe(genericMessage => {
       if (genericMessage !== undefined) {
-        // console.log("Response from server mapped to type: " + genericMessage.type + ", payload: " + genericMessage.payload);
+        console.log("Message from server: " + genericMessage.type + ", payload: " + genericMessage.payload);
         if (genericMessage.type === 'subscribed') {
           this.intervalRunnerService.startInterval();
         }
