@@ -1,9 +1,10 @@
-import {Injectable} from '@angular/core';
+import {Inject, Injectable, Injector, PLATFORM_ID} from '@angular/core';
 import {Observable, Observer, Subject} from 'rxjs';
 import {AnonymousSubject} from 'rxjs/internal/Subject';
 import {map} from 'rxjs/operators';
 import {Message} from "./message";
 import {reportUnhandledError} from "rxjs/internal/util/reportUnhandledError";
+import {HttpClient} from "@angular/common/http";
 
 const CHAT_URL = "ws://localhost:8081";
 
@@ -15,7 +16,7 @@ export class WsClientService {
   private subject: AnonymousSubject<MessageEvent> | undefined
   public messages: Subject<Message>;
 
-  constructor() {
+  constructor(private http: HttpClient) {
     this.messages = <Subject<Message>>this.connect(CHAT_URL).pipe(
       map(
         (response: MessageEvent): Message | undefined => {
@@ -39,7 +40,7 @@ export class WsClientService {
       )
     );
     console.log('constructor setup')
-
+    this.fingerPrintUser();
   }
 
   public connect(url: string): AnonymousSubject<MessageEvent> {
@@ -72,5 +73,8 @@ export class WsClientService {
     return new AnonymousSubject<MessageEvent<Message>>(observer, observable);
   }
 
+  private fingerPrintUser(): string {
+    return "some hash of user";
+  }
 
 }
