@@ -1,6 +1,7 @@
-import {Component} from '@angular/core';
+import {Component, OnDestroy, Inject} from '@angular/core';
 import {WsClientService} from "../ws-client.service";
 import {Message} from "../message";
+import {IntervalRunnerService} from "../interval-runner.service";
 
 @Component({
   selector: 'app-chat',
@@ -8,21 +9,21 @@ import {Message} from "../message";
   styleUrls: ['./chat.component.css'],
   providers: [WsClientService]
 })
-export class ChatComponent {
-  title: string = 'socketrv';
+export class ChatComponent implements OnDestroy {
   content: string = '';
   received: Message[] = [];
   sent: Message[] = [];
+  intervalRunnerService: IntervalRunnerService;
 
   constructor(private wsClientService: WsClientService) {
     wsClientService.messages.subscribe(message => {
-      if(message !== undefined) {
+      if (message !== undefined) {
         this.received.push(message);
         console.log("Response from server mapped to message: " + message.source + ", payload: " + message.content);
       }
-
     });
-    this.startHeartbeat();
+    this.intervalRunnerService = new IntervalRunnerService(() => this.runPingLambda());
+    this.intervalRunnerService.startInterval();
   }
 
   sendMsg() {
@@ -36,21 +37,24 @@ export class ChatComponent {
 
     this.sent.push(message);
     this.wsClientService.messages.next(message);
+    this.intervalRunnerService.setIntervalLength(10);
   }
 
-  private startHeartbeat() {
-    setInterval(() => {
-      console.log('ping');
-      let message: Message = {
-        type: 'ping',
-        source: '',
-        content: ''
-      };
-      message.source = 'localhost';
-      message.content = 'ping';
+  private runPingLambda() {
+    console.log('ping');
+    let message: Message = {
+      type: 'ping',
+      source: '',
+      content: ''
+    };
+    message.source = 'localhost';
+    message.content = 'ping';
 
-      this.wsClientService.messages.next(message);
-    }, 1 * 1000);
+    this.wsClientService.messages.next(message);
+  }
+
+  ngOnDestroy(): void {
+    this.intervalRunnerService.stopInterval();
   }
 
 }
