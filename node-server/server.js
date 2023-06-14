@@ -258,7 +258,6 @@ class EditLockerWebSocketServer {
         } else {
           // Handle subsequent messages after subscription here
           if (message.type === 'ping') {
-            console.log('Ping received:', message.payload);
             const response = {
               type: 'pong',
               payload: 'glad to hear from you!'
@@ -266,8 +265,7 @@ class EditLockerWebSocketServer {
             return ws.send(JSON.stringify(response));
           }
           if (message.type === 'unsubscribe') {
-            console.log('Client unsubscription. ID: ', message.payload);
-            this.editablesMap.remove(ws);
+            this.editablesMap.delete(this.editablesMap.search(ws));
             const response = {
               type: 'unsubscribed',
               payload: message.payload

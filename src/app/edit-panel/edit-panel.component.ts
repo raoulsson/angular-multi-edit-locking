@@ -26,11 +26,12 @@ export class EditPanelComponent implements OnDestroy {
     editLockerClientWsService.genericMessageSubject.subscribe(genericMessage => {
       if (genericMessage !== undefined) {
         console.log("Response from server mapped to type: " + genericMessage.type + ", payload: " + genericMessage.payload);
-        if(genericMessage.type === 'subscribed') {
+        if (genericMessage.type === 'subscribed') {
           this.intervalRunnerService.startInterval();
         }
       }
     });
+    // TODO: fix this so we get a sync initial call without delays
     setTimeout(() => {
       console.log('sleep');
       this.subscribeSelf();
@@ -43,27 +44,40 @@ export class EditPanelComponent implements OnDestroy {
         this.editLockerClientWsService.genericMessageSubject.next(pingMessage);
       }, 1000);
     }, 1000);
-
-
   }
 
   private subscribeSelf() {
-    this.editLockerClientWsService.genericMessageSubject.next(this.subscriptionMessage(true));
+    this.subscriptionMessage(true).then(genericMessage => {
+      this.editLockerClientWsService.genericMessageSubject.next(genericMessage);
+    });
   }
 
   private unsubscribeSelf() {
-    this.editLockerClientWsService.genericMessageSubject.next(this.subscriptionMessage(false));
+    this.subscriptionMessage(false).then(genericMessage => {
+      this.editLockerClientWsService.genericMessageSubject.next(genericMessage);
+    });
   }
 
-  private subscriptionMessage(subscribe: boolean): GenericMessage {
+  private async subscriptionMessage(subscribe: boolean): Promise<GenericMessage> {
     return {
       type: subscribe ? 'subscribe' : 'unsubscribe',
-      payload: this.uniqueEditableId(),
+      payload: await this.uniqueEditableId(),
     };
   }
 
-  private uniqueEditableId() {
-    return 'sadf';
+  /**
+   * https://stackoverflow.com/a/57385857/132396
+   * @private
+   */
+  private async uniqueEditableId() {
+    return this.computeHash(this.templateForView);
+  }
+
+  private async computeHash(data: any): Promise<string> {
+    const msgUint8 = new TextEncoder().encode(data)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
   }
 
   switchToEditMode(): void {
@@ -71,7 +85,7 @@ export class EditPanelComponent implements OnDestroy {
   }
 
   toggleEditMode(): void {
-    if(this.inEditingMode)  {
+    if (this.inEditingMode) {
       // send a message to the server
       // send to server i want to edit, and handle yes/no response
       // sync call

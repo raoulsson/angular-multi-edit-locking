@@ -7,3 +7,5 @@ export function readJsonFileSync(filePath)  {
 export function writeJsonFileSync(filePath, data) {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8')
 }
+
+
