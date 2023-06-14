@@ -1,0 +1,32 @@
+{
+  "studentsList": [
+    {
+      "id": "d00547cd",
+      "firstName": "Jason",
+      "lastName": "Bourne",
+      "gender": "Male",
+      "age": 42
+    },
+    {
+      "id": "ca88c2ea",
+      "firstName": "Jack",
+      "lastName": "Bauer",
+      "gender": "Male",
+      "age": 48
+    },
+    {
+      "id": "ace375d7",
+      "firstName": "Jennifer",
+      "lastName": "Newline",
+      "gender": "Female",
+      "age": 34
+    },
+    {
+      "id": "9e0636fe",
+      "firstName": "Jamie",
+      "lastName": "Lee Curtis",
+      "gender": "Female",
+      "age": 64
+    }
+  ]
+}

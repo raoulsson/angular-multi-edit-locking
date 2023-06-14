@@ -1,0 +1,28 @@
+<h2>
+  Angular + WebSockets
+</h2>
+<div class="row">
+  <div class="column">
+    <textarea [(ngModel)]="content" name="contentInput" cols="40" rows="5"></textarea>
+    <br>
+    <button (click)="sendMsg()">Send Message</button>
+  </div>
+
+</div>
+<br>
+<div>
+  <h2>Sent Messages</h2>
+  <br>
+  <ul>
+    <li *ngFor="let item of sent">{{item.source}} -> {{item.content}}</li>
+  </ul>
+</div>
+
+<br>
+<div>
+  <h2>Received Messages</h2>
+  <br>
+  <ul>
+    <li *ngFor="let item of received">{{item.source}} -> {{item.content}}</li>
+  </ul>
+</div>

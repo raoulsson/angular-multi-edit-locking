@@ -1,0 +1,22 @@
+{
+  "productsList": [
+    {
+      "id": "e2a019df",
+      "name": "ClearView 4K, 2302",
+      "make": "Samsung",
+      "price": 1340
+    },
+    {
+      "id": "10a27645",
+      "name": "HP-42",
+      "make": "Swissmicros",
+      "price": 340
+    },
+    {
+      "id": "f05a63af",
+      "name": " RainShower Head",
+      "make": "Grohe",
+      "price": 42
+    }
+  ]
+}
