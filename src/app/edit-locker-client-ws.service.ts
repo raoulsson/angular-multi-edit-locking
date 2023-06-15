@@ -27,6 +27,7 @@ export class EditLockerClientWsService {
           } else {
             return {
               type: json.type,
+              clientId: json.clientId,
               payload: json.payload
             };
           }

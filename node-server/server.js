@@ -7,6 +7,7 @@ import {fileURLToPath} from "url";
 import {dirname, join} from "path";
 import {logger} from "./middleware/logger.js";
 import {v4 as uuidv4} from "uuid";
+import md5 from "md5";
 /////////////////////////////////////////////////////////////////////////////
 // Start: Websocket, rxjs. Blocking multi-edit
 /////////////////////////////////////////////////////////////////////////////
@@ -29,6 +30,20 @@ app.use(express.static(join(__dirname, 'public')));
 /////////////////////////////////////////////////////////////////////////////
 app.get("/", (req, res) => {
   res.send("<h3>Hello World!</h3>");
+});
+
+app.get("/api/getClientId", (req, res) => {
+  const clientData = [];
+  clientData.push(req.headers['host']);
+  clientData.push(req.headers['connection:']);
+  clientData.push(req.headers['user-agent']);
+  clientData.push(req.headers['accept']);
+  const b = clientData.join("");
+  console.log('b', b);
+
+  let clientId = md5(b);
+  console.log('clientId', clientId);
+  res.send(JSON.stringify(clientId));
 });
 
 app.get("/api/students", (req, res) => {
@@ -241,14 +256,14 @@ class EditLockerWebSocketServer {
 
         if (!this.isSubscribed(ws)) {
           if (message.type === 'subscribe') {
-            console.log('Client subscription. ID: ' + message.payload);
+            console.log('Client subscription. ID: ' + message.clientId);
             // Handle the subscription logic here
-            this.setSubscribed(message.payload, ws);
+            this.setSubscribed(message.clientId, ws);
 
             // Send a response to the client
             const response = {
               type: 'subscribed',
-              payload: message.payload
+              payload: message.clientId
             }
             return ws.send(JSON.stringify(response));
           } else {

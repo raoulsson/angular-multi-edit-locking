@@ -30,10 +30,11 @@ import { AddProductComponent } from './add-product/add-product.component';
 import {NoCacheHeadersInterceptor} from "./NoCacheHeadersInterceptor";
 import { ChatComponent } from './chat/chat.component';
 import {MatTooltipModule} from "@angular/material/tooltip";
+import { GetClientIdComponent } from './get-client-id/get-client-id.component';
 
 
 @NgModule({
-  declarations: [AppComponent, AllDataComponent, AddStudentComponent, EditStudentComponent, DeleteDialogStudentComponent, DeleteDialogProductComponent, ViewStudentComponent, EditPanelComponent, StudentsComboComponent, ProductsComboComponent, ViewProductComponent, EditProductComponent, AddProductComponent, ChatComponent],
+  declarations: [AppComponent, AllDataComponent, AddStudentComponent, EditStudentComponent, DeleteDialogStudentComponent, DeleteDialogProductComponent, ViewStudentComponent, EditPanelComponent, StudentsComboComponent, ProductsComboComponent, ViewProductComponent, EditProductComponent, AddProductComponent, ChatComponent, GetClientIdComponent],
   imports: [
     BrowserModule,
     AppRoutingModule,
@@ -57,6 +58,7 @@ import {MatTooltipModule} from "@angular/material/tooltip";
       useClass: NoCacheHeadersInterceptor,
       multi: true
     },
+    GetClientIdComponent
   ],
   bootstrap: [AppComponent],
   // bootstrap: [EditPanelComponent],

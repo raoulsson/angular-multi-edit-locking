@@ -10,6 +10,7 @@ import {ProductsComboComponent} from "./product-combo/products-combo.component";
 import {AddProductComponent} from "./add-product/add-product.component";
 import {ViewProductComponent} from "./view-product/view-product.component";
 import {ChatComponent} from "./chat/chat.component";
+import {GetClientIdComponent} from "./get-client-id/get-client-id.component";
 
 const routes: Routes = [
   {
@@ -51,6 +52,10 @@ const routes: Routes = [
   {
     path: 'chat',
     component: ChatComponent,
+  },
+  {
+    path: 'getClientId',
+    component: GetClientIdComponent,
   },
 ];
 

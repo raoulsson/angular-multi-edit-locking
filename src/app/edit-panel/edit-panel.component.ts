@@ -6,14 +6,14 @@ import {
   EventEmitter,
   Input,
   OnDestroy,
-  Output, QueryList,
-  TemplateRef, ViewChild, ViewChildren, ViewContainerRef
+  Output,
+  TemplateRef, ViewChild, ViewContainerRef
 } from '@angular/core';
 import {IntervalRunnerService} from "../interval-runner.service";
 import {GenericMessage} from "../generic-message";
 import {EditLockerClientWsService} from "../edit-locker-client-ws.service";
-import {Message} from "../message";
 import {Log} from "../log";
+import {GetClientIdComponent} from "../get-client-id/get-client-id.component";
 
 @Component({
   selector: 'app-edit-panel',
@@ -41,9 +41,11 @@ export class EditPanelComponent implements OnDestroy, AfterViewInit {
   @ContentChild('edit') templateForEdit!: TemplateRef<ElementRef>;
 
   intervalRunnerService: IntervalRunnerService;
+  clientId: string | undefined;
 
-  constructor(private editLockerClientWsService: EditLockerClientWsService) {
+  constructor(private editLockerClientWsService: EditLockerClientWsService, private getClientIdComponent: GetClientIdComponent) {
     this.intervalRunnerService = new IntervalRunnerService(3000, () => this.sendPingLambda());
+
 
     editLockerClientWsService.genericMessageSubject.subscribe(genericMessage => {
       if (genericMessage !== undefined) {
@@ -58,19 +60,23 @@ export class EditPanelComponent implements OnDestroy, AfterViewInit {
       }
     });
     // TODO: fix this so we get a sync initial call without delays
+    this.getClientId();
     setTimeout(() => {
       this.subscribeSelf();
       setTimeout(() => {
         let pingMessage: GenericMessage = {
           type: 'ping',
+          clientId: this.clientId!,
           payload: 'alive!'
         };
         this.editLockerClientWsService.genericMessageSubject.next(pingMessage);
       }, 1000);
     }, 1000);
+
   }
 
-  private subscribeSelf() {
+  private async subscribeSelf() {
+    await this.getClientId();
     this.subscriptionMessage(true).then(genericMessage => {
       this.editLockerClientWsService.genericMessageSubject.next(genericMessage);
     });
@@ -85,6 +91,7 @@ export class EditPanelComponent implements OnDestroy, AfterViewInit {
   private async subscriptionMessage(subscribe: boolean): Promise<GenericMessage> {
     return {
       type: subscribe ? 'subscribe' : 'unsubscribe',
+      clientId: this.clientId!,
       payload: await this.uniqueEditableId(),
     };
   }
@@ -116,6 +123,7 @@ export class EditPanelComponent implements OnDestroy, AfterViewInit {
   private sendPingLambda() {
     let pingMessage: GenericMessage = {
       type: 'ping',
+      clientId: this.clientId!,
       payload: 'alive!'
     };
     this.editLockerClientWsService.genericMessageSubject.next(pingMessage);
@@ -161,9 +169,14 @@ export class EditPanelComponent implements OnDestroy, AfterViewInit {
   }
 
   private showModal(message: string) {
+    console.log("Modal message: " + message);
     this.modalText = message;
     setTimeout(() => {
       this.modalText = "(no text)";
     }, 5000);
+  }
+
+  private async getClientId() {
+    this.clientId = await this.getClientIdComponent.getClientId()
   }
 }

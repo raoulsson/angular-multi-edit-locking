@@ -33,3 +33,5 @@ npm i ws
 npm i rxjs
 
 npm install hashmap
+
+npm i md5
