@@ -13,3 +13,22 @@
 <ng-container *ngIf="!inEditingMode">
   <ng-template [ngTemplateOutlet]="templateForView"></ng-template>
 </ng-container>
+
+<hr/>
+
+<div class="modal-dialog">
+  <h2>Modal Dialog:</h2>
+  <br>
+  <p>{{modalText}}</p>
+</div>
+
+<hr/>
+
+<div class="modal-dialog">
+  <h2>Log</h2>
+  <br>
+  <ul>
+    <li *ngFor="let log of logs">{{log.time}} -> {{log.message}}</li>
+  </ul>
+</div>
+

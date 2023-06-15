@@ -12,6 +12,8 @@ import {
 import {IntervalRunnerService} from "../interval-runner.service";
 import {GenericMessage} from "../generic-message";
 import {EditLockerClientWsService} from "../edit-locker-client-ws.service";
+import {Message} from "../message";
+import {Log} from "../log";
 
 @Component({
   selector: 'app-edit-panel',
@@ -31,6 +33,8 @@ export class EditPanelComponent implements OnDestroy, AfterViewInit {
   @Output() editModeChanged: EventEmitter<boolean> = new EventEmitter<boolean>();
 
   @Input() tooltip: string = "loading...";
+  @Input() modalText: string = "(no text)";
+  @Input() logs: Log[] = [];
 
   @ContentChild('view') templateForView!: TemplateRef<ElementRef>;
   @ContentChild('edit') templateForEdit!: TemplateRef<ElementRef>;
@@ -93,10 +97,10 @@ export class EditPanelComponent implements OnDestroy, AfterViewInit {
   }
 
   private async computeHash(data: any): Promise<string> {
-    const msgUint8 = new TextEncoder().encode(data)
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8)
-    const hashArray = Array.from(new Uint8Array(hashBuffer))
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+    const msgUint8 = new TextEncoder().encode(data);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 12);
   }
 
   toggleEditMode(): void {
@@ -134,14 +138,22 @@ export class EditPanelComponent implements OnDestroy, AfterViewInit {
       this.toggleEditMode();
     }
     if(lock) {
-      console.log("locked by: " + lockedBy);
+      this.addLog("locked by: " + lockedBy);
       this.tooltip = lockedBy + " is editing";
     } else {
-      console.log("unlocked");
+      this.addLog("unlocked");
       this.tooltip = "Switch to Edit Mode";
     }
     this.canEdit = !lock;
   }
 
+  private addLog(message: string) {
+    console.log(message);
+    let log: Log = {
+      time: new Date().toISOString(),
+      message: message,
+    }
+    this.logs.push(log);
+  }
 
 }

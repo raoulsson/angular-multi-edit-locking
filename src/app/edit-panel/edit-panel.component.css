@@ -8,6 +8,12 @@
   padding: 14px;
 }
 
+.modal-dialog {
+  width:800px;
+  margin:0 auto;
+  padding: 20px;
+}
+
 .disable:hover{
   cursor: not-allowed;
 }
