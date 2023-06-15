@@ -32,3 +32,16 @@ or with nodemon:
 
 ### Based on
 - https://www.learmoreseekmore.com/2022/10/angular-v14-angularmaterial-v14-crud-example.html
+
+
+# Open Today:
+
+- Some async calls need proper rxjs'ation. 
+- Editable element ID has to be done either
+- - statically (not good)
+- - or dynamically (good) - ViewChildren, QueryList, ElementRef, Renderer2?
+- Reload after other releases lock
+- Thread that kicks out locks if ping is not received in 10 seconds
+
+
+
