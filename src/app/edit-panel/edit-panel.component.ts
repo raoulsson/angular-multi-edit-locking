@@ -35,6 +35,7 @@ export class EditPanelComponent implements OnDestroy, AfterViewInit {
   @Input() tooltip: string = "loading...";
   @Input() modalText: string = "(no text)";
   @Input() logs: Log[] = [];
+  lockedByUser: string = "";
 
   @ContentChild('view') templateForView!: TemplateRef<ElementRef>;
   @ContentChild('edit') templateForEdit!: TemplateRef<ElementRef>;
@@ -105,6 +106,7 @@ export class EditPanelComponent implements OnDestroy, AfterViewInit {
 
   toggleEditMode(): void {
     if(!this.canEdit) {
+      this.showModal("You can not edit this element right now. It is locked by " + this.lockedByUser + ".");
       return;
     }
     this.inEditingMode = !this.inEditingMode;
@@ -134,7 +136,9 @@ export class EditPanelComponent implements OnDestroy, AfterViewInit {
   }
 
   private lockEditing(lock: boolean, lockedBy: string) {
+    this.lockedByUser = lockedBy;
     if (lock && this.inEditingMode) {
+      this.showModal("Someone else is editing. Somehow your edit mode was not published. Should not happen. Please report this bug.");
       this.toggleEditMode();
     }
     if(lock) {
@@ -156,4 +160,10 @@ export class EditPanelComponent implements OnDestroy, AfterViewInit {
     this.logs.unshift(log);
   }
 
+  private showModal(message: string) {
+    this.modalText = message;
+    setTimeout(() => {
+      this.modalText = "(no text)";
+    }, 5000);
+  }
 }
