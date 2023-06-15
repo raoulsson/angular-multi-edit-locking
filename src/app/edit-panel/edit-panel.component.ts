@@ -153,7 +153,7 @@ export class EditPanelComponent implements OnDestroy, AfterViewInit {
       time: new Date().toISOString(),
       message: message,
     }
-    this.logs.push(log);
+    this.logs.unshift(log);
   }
 
 }
