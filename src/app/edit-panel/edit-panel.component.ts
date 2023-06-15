@@ -42,6 +42,7 @@ export class EditPanelComponent implements OnDestroy, AfterViewInit {
 
   intervalRunnerService: IntervalRunnerService;
   clientId: string | undefined;
+  holdingLock: boolean = false;
 
   constructor(private editLockerClientWsService: EditLockerClientWsService, private getClientIdComponent: GetClientIdComponent) {
     this.intervalRunnerService = new IntervalRunnerService(3000, () => this.sendPingLambda());
@@ -60,7 +61,6 @@ export class EditPanelComponent implements OnDestroy, AfterViewInit {
       }
     });
     // TODO: fix this so we get a sync initial call without delays
-    this.getClientId();
     setTimeout(() => {
       this.subscribeSelf();
       setTimeout(() => {
@@ -111,13 +111,32 @@ export class EditPanelComponent implements OnDestroy, AfterViewInit {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 12);
   }
 
-  toggleEditMode(): void {
-    if(!this.canEdit) {
+  async toggleEditMode(): Promise<void> {
+    if (!this.canEdit) {
       this.showModal("You can not edit this element right now. It is locked by " + this.lockedByUser + ".");
       return;
     }
-    this.inEditingMode = !this.inEditingMode;
-    this.editModeChanged.emit(this.inEditingMode);
+    // We enter edit mode
+    if (!this.holdingLock) {
+      const acquireLock = await this.acquireLock();
+      if (acquireLock) {
+        this.holdingLock = true;
+        this.inEditingMode = !this.inEditingMode;
+        this.editModeChanged.emit(this.inEditingMode);
+      } else {
+        this.showModal("You can not edit this element right now. Should have worked but seems to be an edge case.");
+      }
+    } else {
+      // We end editing
+      const releaseLock = await this.releaseLock();
+      if (releaseLock) {
+        this.holdingLock = false;
+        this.inEditingMode = !this.inEditingMode;
+        this.editModeChanged.emit(this.inEditingMode);
+      } else {
+        this.showModal("You can not let go of the lock. Should have worked but seems to be an edge case.");
+      }
+    }
   }
 
   private sendPingLambda() {
@@ -139,8 +158,11 @@ export class EditPanelComponent implements OnDestroy, AfterViewInit {
   }
 
   ngOnDestroy(): void {
-    this.intervalRunnerService.stopInterval();
-    this.unsubscribeSelf();
+    this.releaseLock().then(r => {
+      console.log("Released lock: " + r)
+      this.intervalRunnerService.stopInterval();
+      this.unsubscribeSelf();
+    });
   }
 
   private lockEditing(lock: boolean, lockedBy: string) {
@@ -178,5 +200,27 @@ export class EditPanelComponent implements OnDestroy, AfterViewInit {
 
   private async getClientId() {
     this.clientId = await this.getClientIdComponent.getClientId()
+  }
+
+  private async acquireLock() {
+    const lockMessage: GenericMessage = {
+      type: 'acquireLock',
+      clientId: this.clientId!,
+      payload: await this.uniqueEditableId(),
+    };
+    // TODO: fix this. for now we just assume it worked. For now the server will send the lock messages to all clients as if.
+    this.editLockerClientWsService.genericMessageSubject.next(lockMessage);
+    return true;
+  }
+
+  private async releaseLock() {
+    const lockMessage: GenericMessage = {
+      type: 'releaseLock',
+      clientId: this.clientId!,
+      payload: await this.uniqueEditableId(),
+    };
+    // TODO: fix this. for now we just assume it worked. For now the server will send the lock messages to all clients as if.
+    this.editLockerClientWsService.genericMessageSubject.next(lockMessage);
+    return true;
   }
 }

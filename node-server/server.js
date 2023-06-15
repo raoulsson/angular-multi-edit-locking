@@ -55,7 +55,7 @@ app.get("/api/students", (req, res) => {
 app.get("/api/students/:id", (req, res) => {
   let jsonData = readJsonFileSync('./db-students.json');
   const found = jsonData.studentsList.some(s => s.id === req.params.id);
-  if(found) {
+  if (found) {
     let student = jsonData.studentsList.find(s => s.id === req.params.id);
     // console.log('student', student);
     res.json(student);
@@ -83,10 +83,10 @@ app.post("/api/students", (req, res) => {
 app.put("/api/students/:id", (req, res) => {
   let jsonData = readJsonFileSync('./db-students.json');
   const found = jsonData.studentsList.some(s => s.id === req.params.id);
-  if(found) {
+  if (found) {
     const updStudent = req.body;
     jsonData.studentsList.forEach(s => {
-      if(s.id === req.params.id) {
+      if (s.id === req.params.id) {
         s.firstName = updStudent.firstName ? updStudent.firstName : s.firstName;
         s.lastName = updStudent.lastName ? updStudent.lastName : s.lastName;
         s.gender = updStudent.gender ? updStudent.gender : s.gender;
@@ -106,9 +106,9 @@ app.delete("/api/students/:id", (req, res) => {
   let jsonData = readJsonFileSync('./db-students.json');
   const found = jsonData.studentsList.some(s => s.id === req.params.id);
   const keepers = [];
-  if(found) {
+  if (found) {
     jsonData.studentsList.forEach(s => {
-      if(s.id !== req.params.id) {
+      if (s.id !== req.params.id) {
         keepers.push(s);
       }
     });
@@ -130,7 +130,7 @@ app.get("/api/products", (req, res) => {
 app.get("/api/products/:id", (req, res) => {
   let jsonData = readJsonFileSync('./db-products.json')
   const found = jsonData.productsList.some(p => p.id === req.params.id);
-  if(found) {
+  if (found) {
     let product = jsonData.productsList.find(p => p.id === req.params.id);
     // console.log('product', product);
     res.json(product);
@@ -157,10 +157,10 @@ app.post("/api/products", (req, res) => {
 app.put("/api/products/:id", (req, res) => {
   let jsonData = readJsonFileSync('./db-products.json');
   const found = jsonData.productsList.some(s => s.id === req.params.id);
-  if(found) {
+  if (found) {
     const updProduct = req.body;
     jsonData.productsList.forEach(p => {
-      if(p.id === req.params.id) {
+      if (p.id === req.params.id) {
         p.name = updProduct.name ? updProduct.name : p.name;
         p.make = updProduct.make ? updProduct.make : p.make;
         p.price = updProduct.price ? updProduct.price : p.price;
@@ -179,9 +179,9 @@ app.delete("/api/products/:id", (req, res) => {
   let jsonData = readJsonFileSync('./db-products.json');
   const found = jsonData.productsList.some(s => s.id === req.params.id);
   const keepers = [];
-  if(found) {
+  if (found) {
     jsonData.productsList.forEach(s => {
-      if(s.id !== req.params.id) {
+      if (s.id !== req.params.id) {
         keepers.push(s);
       }
     });
@@ -197,7 +197,7 @@ app.delete("/api/products/:id", (req, res) => {
 const PORT = 3000;
 app.listen(PORT, () => console.log(`App listening on port: ${PORT}`));
 
-const wss = new WebSocketServer({ port: 8081 });
+const wss = new WebSocketServer({port: 8081});
 
 // Chat Event listener for WebSocket server connections
 wss.on('connection', (ws) => {
@@ -206,7 +206,7 @@ wss.on('connection', (ws) => {
   ws.on('message', (buffer) => {
     const message = JSON.parse(buffer.toString());
 
-    if(message.type === 'ping') {
+    if (message.type === 'ping') {
       console.log('Ping received:', message);
       const response = {
         type: 'pong',
@@ -238,6 +238,7 @@ wss.on('listening', () => {
 class EditLockerWebSocketServer {
 
   editablesMap = new HashMap();
+  lockHeldBy = undefined;
 
   constructor(port) {
     this.port = port;
@@ -245,7 +246,7 @@ class EditLockerWebSocketServer {
   }
 
   start() {
-    this.wss = new WebSocketServer({ port: this.port });
+    this.wss = new WebSocketServer({port: this.port});
 
     this.wss.on('connection', (ws) => {
       console.log('New edit-locker client connected.');
@@ -264,6 +265,9 @@ class EditLockerWebSocketServer {
             const response = {
               type: 'subscribed',
               payload: message.clientId
+            }
+            if (this.lockHeldBy !== undefined) {
+              this.notifySubscriber(ws, message.payload);
             }
             return ws.send(JSON.stringify(response));
           } else {
@@ -287,6 +291,28 @@ class EditLockerWebSocketServer {
             }
             return ws.send(JSON.stringify(response));
           }
+          if (message.type === 'acquireLock') {
+            if (this.lockHeldBy === undefined) {
+              this.lockHeldBy = message.clientId;
+            }
+            const response = {
+              type: 'lockAcquired',
+              payload: message.payload
+            }
+            this.notifyAllSubscribers();
+            return ws.send(JSON.stringify(response));
+          }
+          if (message.type === 'releaseLock') {
+            if (this.lockHeldBy === message.clientId) {
+              this.lockHeldBy = undefined;
+            }
+            const response = {
+              type: 'lockReleased',
+              payload: message.payload
+            }
+            this.notifyAllSubscribers();
+            return ws.send(JSON.stringify(response));
+          }
         }
       });
 
@@ -298,7 +324,7 @@ class EditLockerWebSocketServer {
   }
 
   isSubscribed(ws) {
-    if(this.editablesMap.search(ws) !== null) {
+    if (this.editablesMap.search(ws) !== null) {
       return true;
     }
     return false;
@@ -310,23 +336,62 @@ class EditLockerWebSocketServer {
     }
   }
 
-  c = 0;
-
   runIntervalNotifier() {
     setInterval(() => {
-      this.c = this.c + 1;
-      let lock = true;
-      if(this.c > 3) {
-        console.log("Unlocking");
-        lock = false;
-        this.c = 0;
+      this.notifyAllSubscribers();
+    }, 5000);
+  }
+
+  // c = 0;
+  // runIntervalNotifier() {
+  //   setInterval(() => {
+  //     this.c = this.c + 1;
+  //     let lock = true;
+  //     if(this.c > 3) {
+  //       console.log("Unlocking");
+  //       lock = false;
+  //       this.c = 0;
+  //     }
+  //     this.editablesMap.forEach((ws, editableId) => {
+  //       if (ws !== null) {
+  //         const response = {
+  //           type: 'lock',
+  //           payload: {
+  //             "lock": lock,
+  //             "lockedBy": editableId
+  //           }
+  //         }
+  //         console.log('Sending lock to client: ' + editableId)
+  //         ws.send(JSON.stringify(response));
+  //       }
+  //     });
+  //   }, 5000);
+  // }
+  notifySubscriber(ws, editableId) {
+    if (this.lockHeldBy !== undefined) {
+      if (ws !== null && editableId !== this.lockHeldBy) {
+        const response = {
+          type: 'lock',
+          payload: {
+            "lock": true,
+            "lockedBy": editableId
+          }
+        }
+        console.log('Sending lock to client: ' + editableId)
+        ws.send(JSON.stringify(response));
       }
+    }
+  }
+
+  notifyAllSubscribers() {
+    console.log("this.lockHeldBy: " + this.lockHeldBy);
+    if (this.lockHeldBy !== undefined) {
       this.editablesMap.forEach((ws, editableId) => {
-        if (ws !== null) {
+        if (ws !== null && editableId !== this.lockHeldBy) {
           const response = {
             type: 'lock',
             payload: {
-              "lock": lock,
+              "lock": true,
               "lockedBy": editableId
             }
           }
@@ -334,7 +399,21 @@ class EditLockerWebSocketServer {
           ws.send(JSON.stringify(response));
         }
       });
-    }, 5000);
+    } else {
+      this.editablesMap.forEach((ws, editableId) => {
+        if (ws !== null) {
+          const response = {
+            type: 'lock',
+            payload: {
+              "lock": false,
+              "lockedBy": editableId
+            }
+          }
+          console.log('Sending unlock to client: ' + editableId)
+          ws.send(JSON.stringify(response));
+        }
+      });
+    }
   }
 }
 
