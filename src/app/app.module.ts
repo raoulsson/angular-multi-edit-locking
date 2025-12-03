@@ -6,7 +6,7 @@ import {AppComponent} from './app.component';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {MatToolbarModule} from '@angular/material/toolbar';
 import {AllDataComponent} from './all-data/all-data.component';
-import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import {MatTableModule} from '@angular/material/table';
 import {AddStudentComponent} from './add-student/add-student.component';
 import {MatFormFieldModule} from '@angular/material/form-field';
@@ -33,35 +33,28 @@ import {MatTooltipModule} from "@angular/material/tooltip";
 import { GetClientIdComponent } from './get-client-id/get-client-id.component';
 
 
-@NgModule({
-  declarations: [AppComponent, AllDataComponent, AddStudentComponent, EditStudentComponent, DeleteDialogStudentComponent, DeleteDialogProductComponent, ViewStudentComponent, EditPanelComponent, StudentsComboComponent, ProductsComboComponent, ViewProductComponent, EditProductComponent, AddProductComponent, ChatComponent, GetClientIdComponent],
-  imports: [
-    BrowserModule,
-    AppRoutingModule,
-    BrowserAnimationsModule,
-    MatToolbarModule,
-    HttpClientModule,
-    MatTableModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatCardModule,
-    MatSelectModule,
-    MatButtonModule,
-    FormsModule,
-    MatIconModule,
-    MatDialogModule,
-    MatTooltipModule
-  ],
-  providers: [
-    {
-      provide: HTTP_INTERCEPTORS,
-      useClass: NoCacheHeadersInterceptor,
-      multi: true
-    },
-    GetClientIdComponent
-  ],
-  bootstrap: [AppComponent],
-  // bootstrap: [EditPanelComponent],
-})
+@NgModule({ declarations: [AppComponent, AllDataComponent, AddStudentComponent, EditStudentComponent, DeleteDialogStudentComponent, DeleteDialogProductComponent, ViewStudentComponent, EditPanelComponent, StudentsComboComponent, ProductsComboComponent, ViewProductComponent, EditProductComponent, AddProductComponent, ChatComponent, GetClientIdComponent],
+    bootstrap: [AppComponent], imports: [BrowserModule,
+        AppRoutingModule,
+        BrowserAnimationsModule,
+        MatToolbarModule,
+        MatTableModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatCardModule,
+        MatSelectModule,
+        MatButtonModule,
+        FormsModule,
+        MatIconModule,
+        MatDialogModule,
+        MatTooltipModule], providers: [
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: NoCacheHeadersInterceptor,
+            multi: true
+        },
+        GetClientIdComponent,
+        provideHttpClient(withInterceptorsFromDi())
+    ] })
 export class AppModule {
 }
